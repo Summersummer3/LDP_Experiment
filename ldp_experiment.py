@@ -107,7 +107,7 @@ def count_error(r_1, r_2):
         res += (r_1[i] - r_2[i]) ** 2
     return res
 
-def write_res(r_1, r_2, r_c = None):
+def write_res(r_1, r_2, r_c = None, filename="result.csv"):
     headers = [i for i in xrange(len(r_1))]
     headers.append("error")
     res_1 = count_error(r_1, r_2)
@@ -122,7 +122,7 @@ def write_res(r_1, r_2, r_c = None):
         row_3["error"] = res_2
         rows.append(row_3)
 
-    with open("result.csv", "ab") as f:
+    with open(filename, "ab") as f:
         f_csv = csv.DictWriter(f, headers)
         f_csv.writeheader()
         f_csv.writerows(rows)
@@ -142,14 +142,14 @@ if __name__ == '__main__':
     #     n += 1
     for i in xrange(20):
         r_1 = true_answer(dic_len, db, col)
-        r_2 = ldp_answer(dic_len, db, col, 0.1)
+        r_2 = ldp_answer(dic_len, db, col, 0.5)
         for j in xrange(len(r_2)):
             if r_2[j] < 0:
                 r_c = consistency(r_2)
-                write_res(r_1, r_2, r_c=r_c)
+                write_res(r_1, r_2, r_c=r_c, filename="result0.5,20.csv")
                 break
             elif j == len(r_2) - 1:
-                write_res(r_1, r_2)
+                write_res(r_1, r_2, filename="result0.5,20.csv")
 
     #when epsilon is small, d is large the performance will be bad
 
