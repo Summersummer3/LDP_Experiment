@@ -48,7 +48,7 @@ def true_answer(size, db, col):
     res = list(map(lambda x: x * 1.0 / num, res))
     return res
 
-def ldp_answer(size, db, col, eps):
+def ldp_answer(size, db, col, eps, additive=False):
     res = [0] * size
     Client = pymongo.MongoClient("localhost", 27017)
     db = Client[db]
@@ -59,16 +59,28 @@ def ldp_answer(size, db, col, eps):
     for i in set:
         index = i["type"]
         j = random.randint(0, size - 1)
-        if index == j:
-            p = (math.e ** eps) / (math.e ** eps + 1)
+        if not additive:
+            if index == j:
+                p = (math.e ** eps) / (math.e ** eps + 1)
+            else:
+                p = 1 / (math.e ** eps + 1)
         else:
-            p = 1 / (math.e ** eps + 1)
+            if index <= j:
+                p = (math.e ** eps) / (math.e ** eps + 1)
+            else:
+                p = 1 / (math.e ** eps + 1)
 
         n = random.random()
         if n <= p:
             res[j] += (math.e ** eps) * size / (math.e ** eps - 1)
         else:
             res[j] += (-size) / (math.e ** eps - 1)
+
+    if additive:
+        res_tmp = [res[0]]
+        for i in xrange(1, len(res)):
+            res_tmp.append(res[i] - res[i - 1])
+        res = res_tmp
 
     res = list(map(lambda x: x / num, res))
     return res
@@ -107,24 +119,38 @@ def count_error(r_1, r_2):
         res += (r_1[i] - r_2[i]) ** 2
     return res
 
-def write_res(r_1, r_2, r_c = None, filename="result.csv"):
+def count_maxerror(r_1, r_2):
+    m_error = 0
+    for i in xrange(len(r_1)):
+        error = abs(r_1[i] - r_2[i])
+        if error > m_error:
+            m_error = error
+    return m_error
+
+def write_res(r_1, r_2, r_c = None, filename="result.csv", header=False):
     headers = [i for i in xrange(len(r_1))]
     headers.append("error")
+    headers.append("max_error")
     res_1 = count_error(r_1, r_2)
+    res_2 = count_maxerror(r_1, r_2)
     row_1 = dict((k, v) for k, v in enumerate(r_1))
     row_2 = dict((k, v) for k, v in enumerate(r_2))
     row_2["error"] = res_1
+    row_2["max_error"] = res_2
     rows = [row_1, row_2]
 
     if r_c:
-        res_2 = count_error(r_1, r_c)
+        res_3 = count_error(r_1, r_2)
+        res_4 = count_maxerror(r_1, r_2)
         row_3 = dict((k, v) for k, v in enumerate(r_c))
-        row_3["error"] = res_2
+        row_3["error"] = res_3
+        row_3["max_error"] = res_4
         rows.append(row_3)
 
     with open(filename, "ab") as f:
         f_csv = csv.DictWriter(f, headers)
-        f_csv.writeheader()
+        if header:
+            f_csv.writeheader()
         f_csv.writerows(rows)
         f.close()
 
@@ -140,18 +166,28 @@ if __name__ == '__main__':
     # while n < 40000:
     #     create_data(distri, db, col)
     #     n += 1
+    # for i in xrange(20):
+    #     r_1 = true_answer(dic_len, db, col)
+    #     r_2 = ldp_answer(dic_len, db, col, 0.5)
+    #     for j in xrange(len(r_2)):
+    #         if r_2[j] < 0:
+    #             r_c = consistency(r_2)
+    #             write_res(r_1, r_2, r_c=r_c, filename="result0.5,20.csv")
+    #             break
+    #         elif j == len(r_2) - 1:
+    #             write_res(r_1, r_2, filename="result0.5,20.csv")
     for i in xrange(20):
         r_1 = true_answer(dic_len, db, col)
-        r_2 = ldp_answer(dic_len, db, col, 0.5)
-        for j in xrange(len(r_2)):
-            if r_2[j] < 0:
-                r_c = consistency(r_2)
-                write_res(r_1, r_2, r_c=r_c, filename="result0.5,20.csv")
-                break
-            elif j == len(r_2) - 1:
-                write_res(r_1, r_2, filename="result0.5,20.csv")
+        r_2 = ldp_answer(dic_len, db, col, 0.5, additive=True)
+        r_3 = ldp_answer(dic_len, db, col, 0.5)
+        if not i:
+            write_res(r_1, r_2, filename="result_non_additive.csv", header=True)
+            write_res(r_1, r_3, filename="result_additive.csv", header=True)
+        else:
+            write_res(r_1, r_2, filename="result_non_additive.csv")
+            write_res(r_1, r_3, filename="result_additive.csv")
 
-    #when epsilon is small, d is large the performance will be bad
+    #when epsilon is small, (d is large?) the performance will be bad
 
 
 
