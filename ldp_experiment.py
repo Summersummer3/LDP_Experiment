@@ -7,43 +7,66 @@ import math
 import csv
 import rappor_sim
 
-def create_data(distri, db, col):
-    print sum(distri) != 1
+def create_data(distri, n, db, col):
+    '''
+    :param distri: distribution of all possible types.
+    :param n: number of insert rows
+    :param db: database name.
+    :param col: collection name.
+    :return: 
+    '''
+
     if round(sum(distri), 3) != 1:
         print "error"
         return 0
 
-    Client = pymongo.MongoClient("localhost", 27017)
-    db = Client[db]
+    conn = pymongo.MongoClient("localhost", 27017)
+    db = conn[db]
     col = db[col]
 
     b_p = 0
     b_t = 0
     n = random.random()
 
-    for p in distri:
-        if n <= b_p + p:
-            type = b_t
-            break
-        else:
-            b_p += p
-            b_t += 1
+    for i in xrange(n):
+        for p in distri:
+            if n <= b_p + p:
+                type = b_t
+                break
+            else:
+                b_p += p
+                b_t += 1
 
-    data = {"type": type}
-    col.insert(data)
+        data = {"type": type}
+        col.insert(data)
+
     print "insert success"
+    conn.close()
 
 def db_interface(db, col):
-    Client = pymongo.MongoClient("localhost", 27017)
-    db = Client[db]
+    '''
+    :param db: database name.
+    :param col: collection name.
+    :return: the set of all queries.
+    '''
+
+    conn = pymongo.MongoClient("localhost", 27017)
+    db = conn[db]
     col = db[col]
     query = col.find()
     set = []
     for q in query:
         set.append(dict(q))
+    conn.close()
     return set
 
 def true_answer(size, set):
+    '''
+    :param size: size of types.
+    :param set: the all queries. 
+    :return: true answer of frequencies.
+    '''
+
     res = [0] * size
     num = len(set)
 
@@ -55,6 +78,14 @@ def true_answer(size, set):
     return res
 
 def ldp_answer(size, set, eps, additive=False):
+    '''
+    :param size: 
+    :param set: 
+    :param eps: 
+    :param additive: 
+    :return: 
+    '''
+
     res = [0] * size
     num = len(set)
 
@@ -88,6 +119,11 @@ def ldp_answer(size, set, eps, additive=False):
     return res
 
 def consistency(res):
+    '''
+    :param res: 
+    :return: 
+    '''
+
     r_c = []
     r = []
     r_c.append(res[0] * 1.0)
@@ -159,25 +195,13 @@ def write_res(r_1, r_2, r_c = None, filename="result.csv", header=False):
 if __name__ == '__main__':
     db = "dpdb"
     col = "exp1"
+    n = 40000
     #d = 20
 
     distri = [.08, .02, .05, .05, .01, .09, .03, .07, .11, .02, .04, .03, .05, .05, .13, .03, .02, .02, .04, .06]
     dic_len = len(distri)
 
-    # n = 0
-    # while n < 40000:
-    #     create_data(distri, db, col)
-    #     n += 1
-    # for i in xrange(20):
-    #     r_1 = true_answer(dic_len, db, col)
-    #     r_2 = ldp_answer(dic_len, db, col, 0.5)
-    #     for j in xrange(len(r_2)):
-    #         if r_2[j] < 0:
-    #             r_c = consistency(r_2)
-    #             write_res(r_1, r_2, r_c=r_c, filename="result0.5,20.csv")
-    #             break
-    #         elif j == len(r_2) - 1:
-    #             write_res(r_1, r_2, filename="result0.5,20.csv")
+    create_data(distri, n, db, col)
 
     set = db_interface(db, col)
 
