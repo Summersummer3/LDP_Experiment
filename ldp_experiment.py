@@ -5,6 +5,7 @@ import pymongo
 import random
 import math
 import csv
+import rappor_sim
 
 def create_data(distri, db, col):
     print sum(distri) != 1
@@ -82,43 +83,6 @@ def ldp_answer(size, set, eps, additive=False):
         for i in xrange(1, len(res)):
             res_tmp.append(res[i] - res[i - 1])
         res = res_tmp
-
-    res = list(map(lambda x: x / num, res))
-    return res
-
-def rappor_answer(size, set, eps, type="naive"):
-    res = [0] * size
-    num = len(set)
-
-    if type == "naive":
-        p = math.e ** (eps / (2 * size)) / (1 + math.e ** (eps / (2 * size)))
-    else:
-        p = math.e ** (eps / 2) / (1 + math.e ** (eps / 2))
-
-    for i in set:
-        index = i["type"]
-
-        if type == "naive":
-            for j in xrange(size):
-                r_seed = random.random()
-                if r_seed <= p:
-                    if index == j:
-                        res[j] += 1
-                else:
-                    r_seed = random.random()
-                    if r_seed <= 0.5:
-                        res[j] += 1
-
-        elif type == "sampling":
-            k = random.randint(0, size - 1)
-            r_seed = random.random()
-            if r_seed <= p:
-                if index == k:
-                    res[k] += size
-            else:
-                r_seed = random.random()
-                if r_seed <= 0.5:
-                    res[k] += size
 
     res = list(map(lambda x: x / num, res))
     return res
@@ -214,25 +178,31 @@ if __name__ == '__main__':
     #             break
     #         elif j == len(r_2) - 1:
     #             write_res(r_1, r_2, filename="result0.5,20.csv")
+
     set = db_interface(db, col)
 
-    for i in xrange(50):
+    for i in xrange(5):
+        eps = math.log(9)
+
         r_1 = true_answer(dic_len, set)
         # r_2 = ldp_answer(dic_len, set, 0.5, additive=True)
-        # r_3 = ldp_answer(dic_len, set, 0.5)
-        r_4 = rappor_answer(dic_len, set, 0.5)
-        r_5 = rappor_answer(dic_len, set, 0.5, type="sampling")
+        r_3 = ldp_answer(dic_len, set, eps)
+        # r_4 = rappor_answer(dic_len, set, 2.0)
+        r_5 = rappor_sim.rappor(dic_len, set, eps, type="sampling")
+        r_6 = rappor_sim.basic_rappor(dic_len, set, 0.5, 0.25)
+        print r_6
 
-        print r_4, r_5
+        if not i:
+            write_res(r_1, r_3, filename="result_" + str(eps) + ".csv", header=True)
+            # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv", header=True)
+            write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv", header=True)
+            write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv", header=True)
 
-        # if not i:
-        #     write_res(r_1, r_3, filename="result_none_additive.csv", header=True)
-        #     write_res(r_1, r_4, filename="result_naive_rappor.csv", header=True)
-        #     write_res(r_1, r_5, filename="result_sampling_rappor.csv", header=True)
-        # else:
-        #     write_res(r_1, r_3, filename="result_none_additive.csv")
-        #     write_res(r_1, r_4, filename="result_naive_rappor.csv")
-        #     write_res(r_1, r_5, filename="result_sampling_rappor.csv")
+        else:
+            write_res(r_1, r_3, filename="result_" + str(eps) + ".csv")
+            # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv")
+            write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv")
+            write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv")
 
     #when epsilon is small, (d is large?) the performance will be bad
 
