@@ -4,10 +4,10 @@
 import pymongo
 import random
 import math
-import csv
+import csv_writer
 import rappor_sim
 
-def create_data(distri, n, db, col):
+def create_data(distri, num, db, col):
     '''
     :param distri: distribution of all possible types.
     :param n: number of insert rows
@@ -28,7 +28,7 @@ def create_data(distri, n, db, col):
     b_t = 0
     n = random.random()
 
-    for i in xrange(n):
+    for i in xrange(num):
         for p in distri:
             if n <= b_p + p:
                 type = b_t
@@ -151,64 +151,24 @@ def consistency(res):
             out.append(r[v] - r[v - 1])
     return out
 
-def count_error(r_1, r_2):
-    res = 0
-    for i in xrange(len(r_1)):
-        res += (r_1[i] - r_2[i]) ** 2
-    return res
-
-def count_maxerror(r_1, r_2):
-    m_error = 0
-    for i in xrange(len(r_1)):
-        error = abs(r_1[i] - r_2[i])
-        if error > m_error:
-            m_error = error
-    return m_error
-
-def write_res(r_1, r_2, r_c = None, filename="result.csv", header=False):
-    headers = [i for i in xrange(len(r_1))]
-    headers.append("error")
-    headers.append("max_error")
-    res_1 = count_error(r_1, r_2)
-    res_2 = count_maxerror(r_1, r_2)
-    row_1 = dict((k, v) for k, v in enumerate(r_1))
-    row_2 = dict((k, v) for k, v in enumerate(r_2))
-    row_2["error"] = res_1
-    row_2["max_error"] = res_2
-    rows = [row_1, row_2]
-
-    if r_c:
-        res_3 = count_error(r_1, r_2)
-        res_4 = count_maxerror(r_1, r_2)
-        row_3 = dict((k, v) for k, v in enumerate(r_c))
-        row_3["error"] = res_3
-        row_3["max_error"] = res_4
-        rows.append(row_3)
-
-    with open(filename, "ab") as f:
-        f_csv = csv.DictWriter(f, headers)
-        if header:
-            f_csv.writeheader()
-        f_csv.writerows(rows)
-        f.close()
 
 if __name__ == '__main__':
     db = "dpdb"
     col = "exp1"
-    n = 40000
+    num = 40000
     #d = 20
 
     distri = [.08, .02, .05, .05, .01, .09, .03, .07, .11, .02, .04, .03, .05, .05, .13, .03, .02, .02, .04, .06]
     dic_len = len(distri)
 
-    create_data(distri, n, db, col)
+    # create_data(distri, num, db, col)
 
     set = db_interface(db, col)
+    r_1 = true_answer(dic_len, set)
 
     for i in xrange(5):
         eps = math.log(9)
 
-        r_1 = true_answer(dic_len, set)
         # r_2 = ldp_answer(dic_len, set, 0.5, additive=True)
         r_3 = ldp_answer(dic_len, set, eps)
         # r_4 = rappor_answer(dic_len, set, 2.0)
@@ -217,16 +177,16 @@ if __name__ == '__main__':
         print r_6
 
         if not i:
-            write_res(r_1, r_3, filename="result_" + str(eps) + ".csv", header=True)
+            csv_writer.write_res(r_1, r_3, filename="result_" + str(eps) + ".csv", header=True)
             # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv", header=True)
-            write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv", header=True)
-            write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv", header=True)
+            csv_writer.write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv", header=True)
+            csv_writer.write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv", header=True)
 
         else:
-            write_res(r_1, r_3, filename="result_" + str(eps) + ".csv")
+            csv_writer.write_res(r_1, r_3, filename="result_" + str(eps) + ".csv")
             # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv")
-            write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv")
-            write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv")
+            csv_writer.write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv")
+            csv_writer.write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv")
 
     #when epsilon is small, (d is large?) the performance will be bad
 
