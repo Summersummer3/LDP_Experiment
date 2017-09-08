@@ -24,11 +24,8 @@ def create_itemset(size, n, p, db, col):
 
 
     for i in xrange(n):
-        item_set = []
-        for j in xrange(size):
-            r = random.random()
-            if r <= p:
-                item_set.append(j)
+        r = random.randint(0, size - 1)
+        item_set = random.sample(xrange(size), r)
         data = {"items" : item_set}
         col.insert(data)
 
