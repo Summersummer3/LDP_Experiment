@@ -1,0 +1,6 @@
+x = rep(epsilon, each=2)
+y = rep(c("error", "max_error"), time=5)
+c = as.vector(rbind(mean_error, mean_max_error))
+df = data.frame(x=x, y=y, z=c)
+p = ggplot(data = df, mapping = aes(x = x,y = z, fill = y)) + geom_bar(stat = 'identity', position = 'dodge')
+p + scale_x_continuous(breaks = seq(0, 3, 0.5)) + labs(title = "error comprison", x = "epsilon", y = "") + theme(panel.grid =element_blank())

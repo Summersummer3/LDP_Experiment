@@ -9,7 +9,7 @@ import itertools
 import math
 import csv_writer
 
-def create_itemset(size, n, p, db, col):
+def create_itemset(size, n, dist, db, col):
     '''
     :param size: size of possible items.
     :param n: number of insert item sets.
@@ -24,13 +24,17 @@ def create_itemset(size, n, p, db, col):
 
 
     for i in xrange(n):
-        r = random.randint(0, size - 1)
-        item_set = random.sample(xrange(size), r)
-        data = {"items" : item_set}
+        itemset = []
+        for j in xrange(size):
+            r = random.random()
+            if r <= dist[j]:
+                itemset.append(j)
+        data = {"items": itemset}
         col.insert(data)
 
     print "insert success!"
     conn.close()
+
 
 def create_reflect_dict(size, k):
     '''
@@ -100,13 +104,14 @@ def ldp_answer(set, lst, eps):
 if __name__ == '__main__':
 
     size = 10
-    n = 120000
+    n = 200000
     k = 3
     db = "dpdb"
-    col = "exp_itemset"
+    col = "exp_itemset_1"
+    dist = [0.8, 0.1, 0.3, 0.7, 0.7, 0.1, 0.2, 0.4, 0.2, 0.5]
     eps = 2.0
 
-    # create_itemset(size, n, 0.3, db, col)
+    # create_itemset(size, n, dist, db, col)
     dic = create_reflect_dict(size, k)
     set = db_interface(db, col)
     lst = sorted(list(dic.items()), key=lambda x: x[1])
@@ -116,7 +121,7 @@ if __name__ == '__main__':
     for i in lst:
         titles.append(str(i[0]))
 
-    for j in xrange(5):
+    for j in xrange(10):
 
         r_2 = ldp_answer(set, lst, eps)
 

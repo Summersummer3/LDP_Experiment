@@ -46,7 +46,6 @@ def write_res(r_1, r_2, r_c = None, filename="result.csv", header=False):
 
 def write_fim_res(r_1, r_2, filename="result.csv", header=False, titles=None):
     headers = titles[:]
-    print headers
     res_1 = count_error(r_1, r_2)
     res_2 = count_maxerror(r_1, r_2)
     row_1 = dict(zip(headers, r_1))
