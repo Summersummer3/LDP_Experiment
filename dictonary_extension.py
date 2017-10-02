@@ -12,15 +12,13 @@ def extension(lst):
             if len(inter_set) != l - 1:
                 continue
             diff = set_B.difference(set_A).pop()
-            result = True
             for inter in inter_set:
                 tmp = set_A.copy()
                 tmp.remove(inter)
                 tmp.add(diff)
                 if tmp not in lst:
-                    result = False
                     break
-            if result:
+            else:
                 set_A.add(diff)
                 if set_A not in f_set:
                     f_set.append(set_A)
