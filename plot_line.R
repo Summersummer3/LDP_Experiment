@@ -24,3 +24,5 @@ minor.tick(nx=3, ny=3, tick.ratio = 0.5)
 legend("topright", inset = .05, title = "Error Type", c("Error", "Max error"), lty=c(1, 2), pch = c(15, 16), col = c("red", "blue"))
 
 par(opar)
+
+
