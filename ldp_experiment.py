@@ -156,7 +156,7 @@ if __name__ == '__main__':
     db = "dpdb"
     col = "exp1"
     num = 40000
-    eps = math.log(9, math.e)
+    eps = 0.1
     #d = 20
 
     distri = [.08, .02, .05, .05, .01, .09, .03, .07, .11, .02, .04, .03, .05, .05, .13, .03, .02, .02, .04, .06]
@@ -167,31 +167,32 @@ if __name__ == '__main__':
     set = db_interface(db, col)
     r_1 = true_answer(dic_len, set)
 
-    for i in xrange(10000):
+    while eps < 0.4:
+        for i in xrange(10000):
 
-        # r_2 = ldp_answer(dic_len, set, 0.5, additive=True)
-        r_3 = ldp_answer(dic_len, set, eps)
-        # r_7 = consistency(r_3)
-        # r_4 = rappor_answer(dic_len, set, 2.0)
-        r_5 = rappor_sim.rappor(dic_len, set, eps, type="sampling")
-        r_6 = rappor_sim.basic_rappor(dic_len, set, 0.5, 0.25)
+            # r_2 = ldp_answer(dic_len, set, 0.5, additive=True)
+            r_3 = ldp_answer(dic_len, set, eps)
+            r_7 = consistency(r_3)
+            # r_4 = rappor_answer(dic_len, set, 2.0)
+            # r_5 = rappor_sim.rappor(dic_len, set, eps, type="sampling")
+            # r_6 = rappor_sim.basic_rappor(dic_len, set, 0.25, 0.25)
 
 
-        if not i:
-            csv_writer.write_res(r_1, r_3, filename="result_" + str(eps) + ".csv", header=True)
-            # csv_writer.write_res(r_1, r_7, filename="result_consistency_" + str(eps) + ".csv", header=True)
-            # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv", header=True)
-            csv_writer.write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv", header=True)
-            csv_writer.write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv", header=True)
+            if not i:
+                csv_writer.write_res(r_1, r_3, filename="result_" + str(eps) + ".csv", header=True)
+                csv_writer.write_res(r_1, r_7, filename="result_consistency_" + str(eps) + ".csv", header=True)
+                # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv", header=True)
+                # csv_writer.write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv", header=True)
+                # csv_writer.write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv", header=True)
 
-        else:
-            csv_writer.write_res(r_1, r_3, filename="result_" + str(eps) + ".csv")
-            # csv_writer.write_res(r_1, r_7, filename="result_consistency_" + str(eps) + ".csv")
-            # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv")
-            csv_writer.write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv")
-            csv_writer.write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv")
+            else:
+                csv_writer.write_res(r_1, r_3, filename="result_" + str(eps) + ".csv")
+                csv_writer.write_res(r_1, r_7, filename="result_consistency_" + str(eps) + ".csv")
+                # write_res(r_1, r_4, filename="result_naive_rappor_" + str(eps) + ".csv")
+                # csv_writer.write_res(r_1, r_5, filename="result_sampling_rappor_" + str(eps) + ".csv")
+                # csv_writer.write_res(r_1, r_6, filename="result_basic_rappor_" + str(eps) + ".csv")
 
-    #when epsilon is small, (d is large?) the performance will be bad
-    print "write_finish!!"
-
+            #when epsilon is small, (d is large?) the performance will be bad
+        print "write_finish!!"
+        eps += 0.2
 

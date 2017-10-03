@@ -8,9 +8,9 @@ def rappor(size, set, eps, type="naive"):
     num = len(set)
 
     if type == "naive":
-        p = math.e ** (eps / (2 * size)) / (1 + math.e ** (eps / (2 * size)))
+        p = math.e ** (eps / size) / (1 + math.e ** (eps / size))
     else:
-        p = math.e ** (eps / 2) / (1 + math.e ** (eps / 2))
+        p = math.e ** (eps) / (1 + math.e ** (eps))
 
     for i in set:
         index = i["type"]
