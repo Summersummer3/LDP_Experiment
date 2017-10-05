@@ -162,7 +162,7 @@ if __name__ == '__main__':
     distri = [.08, .02, .05, .05, .01, .09, .03, .07, .11, .02, .04, .03, .05, .05, .13, .03, .02, .02, .04, .06]
     dic_len = len(distri)
 
-    # create_data(distri, num, db, col)
+    create_data(distri, num, db, col)
 
     set = db_interface(db, col)
     r_1 = true_answer(dic_len, set)
