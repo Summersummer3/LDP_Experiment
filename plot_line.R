@@ -14,9 +14,9 @@ mean_max_error <- c(result_0.5[2], result_1.0[2], result_1.5[2], result_2.0[2], 
 epsilon <- c(0.5, 1.0, 1.5, 2.0, 2.5)
 
 opar <- par(no.readonly = TRUE)
-par(lwd=2, cex=1.2)
-plot(epsilon, mean_error, type="b", pch=15, lty=1, col="red", ylim=c(0, 0.12), main = "Error and Max Error", xlab = "Epsilon", ylab = "Error")
-lines(epsilon, mean_max_error, type = "b", pch=16, lty=2, col="blue")
+par(lwd=3, cex=1.2)
+plot(y.1, type="b", pch=15, lty=1, lwd=3, col="red", main = "Error and Max Error", xlab = "Epsilon", ylab = "Error")
+lines(y.2, type ="b", pch=16, lty=2, lwd=3, col="blue")
 
 library(Hmisc)
 minor.tick(nx=3, ny=3, tick.ratio = 0.5)

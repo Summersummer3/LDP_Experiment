@@ -13,7 +13,7 @@ error_mean_sr_ln9 <- mean_for_error(sampling_rappor_ln9$error, sampling_rappor_l
 error_mean_sr_ln49 <- mean_for_error(sampling_rappor_ln49$error, sampling_rappor_ln49$max_error)
 eps <- c("log(9)", "log(49)")
 x = rep(eps, each = 3)
-y = rep(c("sampling_Rappor", "basic_Rappor", "our_method"), time=2)
+y = rep(c("sr", "br", "ours"), time=2)
 
 error_mean_cmp <- c(error_mean_ln9[1], error_mean_ln49[1])
 error_mean_br_cmp <- c(error_mean_br_ln9[1], error_mean_br_ln49[1])
@@ -28,14 +28,18 @@ c.cmp2 = as.vector(rbind(error_max_mean_sr_cmp, error_max_mean_br_cmp, error_max
 
 dev.off()
 
+
 df_1 = data.frame(x=x, y=y, z=c.cmp1)
 df_1$order <- factor(df_1$x, rep(eps, each = 3))
-df_1$order2 <- factor(df_1$y, rep(c("sampling_Rappor", "basic_Rappor", "our_method"), time=2))
+df_1$order2 <- factor(df_1$y, rep(c("sr", "br", "ours"), time=2))
 p1 = ggplot(data = df_1, mapping = aes(x = x, y = z, fill = y)) + geom_bar(stat = 'identity', aes(x = order, fill = order2), data = df_1, position = position_dodge(0.2), width = 0.15)
-p1 + labs(title = "error comprison", x = "epsilon", y = "error") + theme(panel.grid =element_blank(), legend.title=element_blank())
+p1 = p1 + labs(x = "epsilon", y = "error") + theme(panel.grid =element_blank(), legend.title=element_blank())
 
 df_2 = data.frame(x=x, y=y, z=c.cmp2)
 df_2$order <- factor(df_2$x, rep(eps, each = 3))
-df_2$order2 <- factor(df_2$y, rep(c("sampling_Rappor", "basic_Rappor", "our_method"), time=2))
+df_2$order2 <- factor(df_2$y, rep(c("sr", "br", "ours"), time=2))
 p2 = ggplot(data = df_2, mapping = aes(x = x,y = z, fill = y)) + geom_bar(stat = 'identity', aes(x = order, fill = order2), data = df_2, position = position_dodge(0.2), width = 0.15)
-p2 + labs(title = "max error comprison", x = "epsilon", y = "max error") + theme(panel.grid =element_blank(), legend.title=element_blank())
+p2 = p2 + labs(x = "epsilon", y = "max error") + theme(panel.grid =element_blank(), legend.title=element_blank())
+
+require(gridExtra)
+grid.arrange(p1, p2, ncol=2)
