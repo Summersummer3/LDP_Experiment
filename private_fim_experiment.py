@@ -13,9 +13,13 @@ class Itemset:
         self.pattern = pattern
         self.count = count
         self.n = n
+        self.freq = 0
+
+    def set_freq(self, freq=0):
+        self.freq = freq if freq else self.count * 1.0 / self.n
 
     def out(self):
-        print (self.pattern, self.count * 1.0 / self.n)
+        print (self.pattern, self.freq)
 
 
 def create_itemset(size, n, dist, db, col):
@@ -40,7 +44,6 @@ def create_itemset(size, n, dist, db, col):
             if r <= dist[j - 1]:
                 itemset.append(j)
         data = {"items": itemset}
-        print data
         col.insert(data)
 
     print "insert success!"
@@ -48,7 +51,7 @@ def create_itemset(size, n, dist, db, col):
     return 0
 
 
-def db_interface(db, col):
+def db_query_interface(db, col, type="i"):
     '''
     :param db: 
     :param col: 
@@ -58,11 +61,33 @@ def db_interface(db, col):
     db = conn[db]
     col = db[col]
     query = col.find()
-    T = []
-    for q in query:
-        T.append(list(q["items"]))
+    if type == "i":
+        T = []
+        for q in query:
+            T.append(list(q["items"]))
+        conn.close()
+        return T
+
+    if type == "r":
+        L = []
+        for q in query:
+            itemset = Itemset(set(list(q["itemset"])))
+            itemset.set_freq(q["freq"])
+            L.append(itemset)
+        conn.close()
+        return L
+
+
+def db_insert_interface(db, col, lst):
+    conn = pymongo.MongoClient("localhost", 27017)
+    db = conn[db]
+    col = db[col]
+    for itemset in lst:
+        data = {"itemset": list(itemset.pattern),
+                "freq": itemset.freq}
+        col.insert(data)
     conn.close()
-    return T
+    return 0
 
 
 def init_domain(size):
@@ -115,19 +140,23 @@ def apriori(T, domain, l, phi):
 
         domain = []
         for c in C:
-            if (c.count * 1.0 / n) >= phi:
+            c.set_freq()
+            if c.freq >= phi:
                 L.append(c)
                 domain.append(c.pattern)
 
         domain = extension(domain)
+
         C = []
         l_now += 1
+        print "length:" + str(l_now)
+        print domain
+
     return L
 
 def ldp_apriori(T, domain, eps, l, phi):
 
     n = len(T)
-    print n
     L = []
     l_now = 1
 
@@ -146,16 +175,15 @@ def ldp_apriori(T, domain, eps, l, phi):
                 res[j] += (-size) / (math.e ** eps - 1)
 
         res = list(map(lambda x: x / n, res))
-        print res
 
         domain_tmp = []
         for i in xrange(size):
             if res[i] >= phi:
-                itemset = Itemset(pattern=domain[i], count=res[i])
+                itemset = Itemset(pattern=domain[i])
+                itemset.set_freq(res[i])
                 L.append(itemset)
                 domain_tmp.append(itemset.pattern)
         domain = extension(domain_tmp)
-        domain_tmp = []
         l_now += 1
 
     return L
@@ -196,31 +224,108 @@ def extension(lst):
     return f_set
 
 
+def scores(L, L_dp, T):
+
+    n = len(T)
+    size_L = len(L)
+    size_L_dp = len(L_dp)
+    error = []
+    count = 0
+
+    if not (size_L_dp and size_L):
+        print "At least one input is empty set"
+        return 0
+
+    for i_1 in L:
+        for i_2 in L_dp:
+            if i_1.pattern == i_2.pattern:
+                count += 1
+                error.append(abs(i_1.freq - i_2.freq))
+                L_dp.remove(i_2)
+
+    score_c = count * 1.0 / size_L
+    score_s = len(L_dp) * 1.0 / size_L_dp
+
+    for itemset in L_dp:
+        count_t = 0
+        for t in T:
+            if satisfy(t, itemset.pattern):
+                count_t += 1
+        freq = count_t * 1.0 / n
+        error.append(abs(freq - itemset.freq))
+
+    max_error = max(error)
+
+    return score_c, score_s, max_error
+
 
 
 if __name__ == '__main__':
 
-    size = 10
-    n = 300000
+    size = 20
+    n = 500000
     k = 3
     db = "dpdb"
-    col = "exp_itemset_1"
-    dist = [0.8, 0.1, 0.3, 0.7, 0.7, 0.4, 0.2, 0.4, 0.2, 0.9]
-    eps = 2.0
+    col = "exp_itemset_2"
+    col_mining_result = "mining_result"
 
+    # dist = []
+    # for i in xrange(size):
+    #     dist.append(round(random.random(), 3))
+    #
+    eps = 2.0
+    #
+    # print dist
+    #
     # ret = create_itemset(size, n, dist, db, col)
     # if ret < 0:
     #     print "Wrong distribution!"
 
     domain = init_domain(size)
 
-    T = db_interface(db, col)
-    # res = apriori(T, domain, 5, 0.15)
-    # for r in res:
-    #     r.out()
-    res_1 = ldp_apriori(T, domain, eps, 5, 0.15)
-    for r in res_1:
-        r.out()
+    T = db_query_interface(db, col)
+
+    # print "data read complete!"
+    # L_1 = apriori(T, domain, 5, 0.2)
+    # flag = db_insert_interface(db, col_mining_result, L_1)
+    # if not flag:
+    #     print "insert complete!"
+
+    L = db_query_interface(db, col_mining_result, type="r")
+    for i in L:
+        i.out()
+
+
+    # domain_test = init_domain(5)
+    # T_test = [[1, 3, 4], [2, 3, 5], [1, 2, 3, 5], [2, 5]]
+    # L_1 = apriori(T_test, domain_test, 3, 0.5)
+    # flag = db_insert_interface(db, col_mining_result, L_1)
+    # if not flag:
+    #     print "insert complete!"
+    # L = db_query_interface(db, col_mining_result, type="r")
+    # for i in L:
+    #     i.out()
+    #
+    # L_dp = ldp_apriori(T_test, domain_test, eps, 3, 0.5)
+    # for j in L_dp:
+    #     j.out()
+    #
+    # s_1, s_2, accuracy = scores(L, L_dp, T_test)
+    # print s_1, s_2, accuracy
+
+
+
+
+    L_2 = ldp_apriori(T, domain, eps, 5, 0.2)
+
+    s_1, s_2, accuracy = scores(L, L_2, T)
+    print s_1, s_2, accuracy
+
+    # res_2 = ldp_apriori(T, domain, eps, 5, 0.2)
+    # for r_2 in res_2:
+    #     r_2.out()
+
+
 
     # titles = []
     # r_1 = true_answer(set, dic, k)
