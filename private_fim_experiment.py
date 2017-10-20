@@ -6,7 +6,7 @@
 import pymongo
 import random
 import math
-import csv_writer
+import csv
 
 class Itemset:
     def __init__(self, pattern, count=1, n=1):
@@ -78,16 +78,26 @@ def db_query_interface(db, col, type="i"):
         return L
 
 
-def db_insert_interface(db, col, lst):
+def db_insert_interface(db, col, lst, type="r"):
+
     conn = pymongo.MongoClient("localhost", 27017)
     db = conn[db]
     col = db[col]
-    for itemset in lst:
-        data = {"itemset": list(itemset.pattern),
-                "freq": itemset.freq}
-        col.insert(data)
-    conn.close()
-    return 0
+
+    if type == "r":
+        for itemset in lst:
+            data = {"itemset": list(itemset.pattern),
+                    "freq": itemset.freq}
+            col.insert(data)
+        conn.close()
+        return 0
+
+    if type == "s":
+        for scores in lst:
+            data = {"score_c": scores[0], "score_s": scores[1], "max_error": scores[2], "error": scores[3]}
+            col.insert(data)
+        conn.close()
+        return 0
 
 
 def init_domain(size):
@@ -229,7 +239,8 @@ def scores(L, L_dp, T):
     n = len(T)
     size_L = len(L)
     size_L_dp = len(L_dp)
-    error = []
+    error = 0
+    errors = []
     count = 0
 
     if not (size_L_dp and size_L):
@@ -240,7 +251,8 @@ def scores(L, L_dp, T):
         for i_2 in L_dp:
             if i_1.pattern == i_2.pattern:
                 count += 1
-                error.append(abs(i_1.freq - i_2.freq))
+                errors.append(abs(i_1.freq - i_2.freq))
+                error += (i_1.freq - i_2.freq) ** 2
                 L_dp.remove(i_2)
 
     score_c = count * 1.0 / size_L
@@ -252,11 +264,12 @@ def scores(L, L_dp, T):
             if satisfy(t, itemset.pattern):
                 count_t += 1
         freq = count_t * 1.0 / n
-        error.append(abs(freq - itemset.freq))
+        errors.append(abs(freq - itemset.freq))
+        error += (freq - itemset.freq) ** 2
 
-    max_error = max(error)
+    max_error = max(errors)
 
-    return score_c, score_s, max_error
+    return [score_c, score_s, max_error, error]
 
 
 
@@ -269,11 +282,11 @@ if __name__ == '__main__':
     col = "exp_itemset_2"
     col_mining_result = "mining_result"
 
+
     # dist = []
     # for i in xrange(size):
     #     dist.append(round(random.random(), 3))
     #
-    eps = 2.0
     #
     # print dist
     #
@@ -316,10 +329,34 @@ if __name__ == '__main__':
 
 
 
-    L_2 = ldp_apriori(T, domain, eps, 5, 0.2)
+    eps = 1.0
 
-    s_1, s_2, accuracy = scores(L, L_2, T)
-    print s_1, s_2, accuracy
+    while eps <= 2.0:
+        times = 3
+        lst = []
+        res = [0] * 4
+        col_scores = "col_scores_" + str(eps)
+        for i in xrange(times):
+            L_2 = ldp_apriori(T, domain, eps, 5, 0.2)
+            s = scores(L, L_2, T)
+            for j in xrange(len(res)):
+                res[j] += s[j]
+            lst.append(s)
+
+        res = list(map(lambda x: x / times, res))
+        title = ["score_c", "score_s", "max_error", "error", "epsilon"]
+        res.append(eps)
+        row = dict(zip(title, res))
+
+        with open("col_scores.csv", "ab") as f:
+            f_csv = csv.DictWriter(f, title)
+            f_csv.writerow(row)
+            f.close()
+
+        db_insert_interface(db, col_scores, lst, type="s")
+        eps += 1.0
+
+
 
     # res_2 = ldp_apriori(T, domain, eps, 5, 0.2)
     # for r_2 in res_2:
