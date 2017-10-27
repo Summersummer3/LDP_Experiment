@@ -7,6 +7,8 @@ import pymongo
 import random
 import math
 import csv
+import numpy as np
+
 
 class Itemset:
     def __init__(self, pattern, count=1, n=1):
@@ -76,6 +78,23 @@ def db_query_interface(db, col, type="i"):
             L.append(itemset)
         conn.close()
         return L
+
+    if type == "v":
+        score_c = []
+        score_s = []
+        max_error = []
+        error = []
+        for q in query:
+            score_c.append(q["score_s"])
+            score_s.append(q["score_c"])
+            max_error.append(q["max_error"])
+            error.append(q["error"])
+        array_sc = np.array(score_c)
+        array_ss = np.array(score_s)
+        array_me = np.array(max_error)
+        array_e = np.array(error)
+        return [math.log(np.var(array_sc), 10), math.log(np.var(array_ss), 10),
+                math.log(np.var(array_me), 10), math.log(np.var(array_e), 10)]
 
 
 def db_insert_interface(db, col, lst, type="r"):
@@ -294,9 +313,9 @@ if __name__ == '__main__':
     # if ret < 0:
     #     print "Wrong distribution!"
 
-    domain = init_domain(size)
-
-    T = db_query_interface(db, col)
+    # domain = init_domain(size)
+    #
+    # T = db_query_interface(db, col)
 
     # print "data read complete!"
     # L_1 = apriori(T, domain, 5, 0.2)
@@ -304,9 +323,9 @@ if __name__ == '__main__':
     # if not flag:
     #     print "insert complete!"
 
-    L = db_query_interface(db, col_mining_result, type="r")
-    for i in L:
-        i.out()
+    # L = db_query_interface(db, col_mining_result, type="r")
+    # for i in L:
+    #     i.out()
 
 
     # domain_test = init_domain(5)
@@ -329,38 +348,57 @@ if __name__ == '__main__':
 
 
 
-    eps = 1.0
-
-    while eps <= 2.0:
-        times = 3
-        lst = []
-        res = [0] * 4
-        col_scores = "col_scores_" + str(eps)
-        for i in xrange(times):
-            L_2 = ldp_apriori(T, domain, eps, 5, 0.2)
-            s = scores(L, L_2, T)
-            for j in xrange(len(res)):
-                res[j] += s[j]
-            lst.append(s)
-
-        res = list(map(lambda x: x / times, res))
-        title = ["score_c", "score_s", "max_error", "error", "epsilon"]
-        res.append(eps)
-        row = dict(zip(title, res))
-
-        with open("col_scores.csv", "ab") as f:
-            f_csv = csv.DictWriter(f, title)
-            f_csv.writerow(row)
-            f.close()
-
-        db_insert_interface(db, col_scores, lst, type="s")
-        eps += 1.0
+    # eps = 1.0
+    #
+    # while eps <= 5.0:
+    #     times = 1000
+    #     lst = []
+    #     res = [0] * 4
+    #     col_scores = "col_scores_" + str(eps)
+    #     for i in xrange(times):
+    #         L_2 = ldp_apriori(T, domain, eps, 5, 0.2)
+    #         s = scores(L, L_2, T)
+    #         for j in xrange(len(res)):
+    #             res[j] += s[j]
+    #         lst.append(s)
+    #
+    #     res = list(map(lambda x: x / times, res))
+    #     title = ["score_c", "score_s", "max_error", "error", "epsilon"]
+    #     res.append(eps)
+    #     row = dict(zip(title, res))
+    #
+    #     with open("col_scores.csv", "ab") as f:
+    #         f_csv = csv.DictWriter(f, title)
+    #         if eps == 1.0:
+    #             f_csv.writeheader()
+    #         f_csv.writerow(row)
+    #         f.close()
+    #
+    #     db_insert_interface(db, col_scores, lst, type="s")
+    #     eps += 1.0
 
 
 
     # res_2 = ldp_apriori(T, domain, eps, 5, 0.2)
     # for r_2 in res_2:
     #     r_2.out()
+
+    eps = 1.0
+
+    while eps <= 5.0:
+        col_name = "col_scores_" + str(eps)
+        res = db_query_interface(db, col_name, type="v")
+        title = ["score_c", "score_s", "max_error", "error", "epsilon"]
+        res.append(eps)
+        row = dict(zip(title, res))
+        with open("log_var_col_scores.csv", "ab") as f:
+            f_csv = csv.DictWriter(f, title)
+            if eps == 1.0:
+                f_csv.writeheader()
+            f_csv.writerow(row)
+            f.close()
+        eps += 1.0
+
 
 
 

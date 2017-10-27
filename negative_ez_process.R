@@ -60,11 +60,10 @@ mean_p_error <- c(result_p_0.2[1], result_p_0.3[1], result_p_0.4[1], result_p_0.
 mean_error_small <- c(result_0.2[1], result_0.3[1], result_0.4[1], result_0.5[1], result_0.6[1], result_0.8[1])
 
 eps2 <- c("0.2", "0.3", "0.4", "0.5", "0.6", "0.8")
-x_3 = rep(eps2, each=3)
-y_3 = rep(c("error", "sp_error", "p_error"), time=6)
+x_3 = factor(rep(eps2, each=3), eps2)
+y_3 = factor(rep(c("error", "n_error", "p_error"), time=6), c("error", "n_error", "p_error"))
 c_3 = as.vector(rbind(mean_error_small, mean_ez_error, mean_p_error))
 df_3 = data.frame(x=x_3, y=y_3, z=c_3)
-df_3$order <- factor(df_3$x, rep(eps2, each=3))
-df_3$order2 <- factor(df_3$y, rep(c("error", "sp_error", "p_error"), time=7))
-p3 = ggplot(data = df_3, mapping = aes(x = x, y = z, fill = y)) + geom_bar(stat = 'identity', aes(x = order, fill = order2), data = df_3, position = position_dodge(0.2), width = 0.15)
-p3 + labs(title = "error comparison", x = "epsilon", y = "error") + theme(panel.grid =element_blank(), legend.title=element_blank())
+p3 = ggplot(data = df_3, mapping = aes(x = x, y = z, fill = y)) + geom_bar(stat = 'identity', aes(x = x, fill = y), data = df_3, position = position_dodge(0.2), width = 0.15)
+p3 + labs(x = "epsilon", y = "error") + theme(panel.grid =element_blank(), legend.title=element_blank(), legend.text = element_text(size = 6), axis.text.x = element_text(size = 6), 
+                                              axis.title.x = element_text(size = 6), axis.text.y = element_text(size = 6), axis.title.y = element_text(size = 6))
